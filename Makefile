@@ -1,0 +1,22 @@
+# Author: Julian To
+# REDID: 130405272
+
+CXX = g++
+CXXFLAGS = -std=c++11 -Wall -g3 -c
+
+OBJS = vaddr_tracereader.o log_helpers.o
+
+PROGRAM=pagingwithpr
+
+$(PROGRAM) : $(OBJS) 
+	$(CXX) -o $(PROGRAM) $^
+
+vaddr_tracereader.o: vaddr_tracereader.h
+		$(CXX) $(CXXFLAGS) vaddr_tracereader.cpp
+
+log_helpers.o: log_helpers.h
+		$(CXX) $(CXXFLAGS) log_helpers.cpp
+			
+clean :
+		rm -f *.o $(PROGRAM)
+
