@@ -4,7 +4,7 @@
 CXX = g++
 CXXFLAGS = -std=c++11 -Wall -g3 -c
 
-OBJS = vaddr_tracereader.o log_helpers.o
+OBJS = vaddr_tracereader.o log_helpers.o pagingwithpr.o pagetable.o
 
 PROGRAM=pagingwithpr
 
@@ -16,6 +16,12 @@ vaddr_tracereader.o: vaddr_tracereader.h
 
 log_helpers.o: log_helpers.h
 		$(CXX) $(CXXFLAGS) log_helpers.cpp
+
+pagetable.o: pagetable.h
+		$(CXX) $(CXXFLAGS) pagetable.cpp
+
+pagingwithpr.o: pagetable.h
+		$(CXX) $(CXXFLAGS) pagingwithpr.cpp
 			
 clean :
 		rm -f *.o $(PROGRAM)
