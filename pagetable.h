@@ -7,6 +7,14 @@
 
 using namespace std;
 
+// forward declaration for compiler
+class PageTable; 
+struct Map;
+struct Level;
+
+/*
+ * Map
+ */
 struct Map {
   int frameNumber;
   bool validFlag;
@@ -16,18 +24,24 @@ struct Map {
  * The Level struct is the page tree node representation
  */
 struct Level {
-  Level** nextLevel;
-  Map* mapArr;
+  PageTable* pageTablePtr;
+  int currentDepth;
+
+  Level** nextLevel;  // arr of Level objects that represent the next levels
+  Map* mapArr;        // 
 };
 
+/*
+ * PageTable
+ */
 class PageTable {
   private:
     int levelCount;             // number of levels
     unsigned int* bitMaskAry;   // array of bitmasks indexed by level
-    int* shiftAry;              // num of bits to shift indexed by level
-    int* entryCount             // num of next level entries indexed by level
+    int* shiftAry;              // array of num of bits to shift indexed by level
+    int* entryCount;             // array of num of next level entries indexed by level
     int pageSize;               // size of each page
-    Level* rootLevel            // root node of pagte table's level tree
+    Level* rootLevel;            // root node of pagte table's level tree
   public:
     /*
      * @brief constructor for page table
@@ -35,7 +49,7 @@ class PageTable {
      * @param BLAH!! IDK YET!!
      *
      */
-    PageTable();
+    PageTable( int* bitsPerLevel, int levelCount, int addressSpaceSize );
 
     /* 
      * @brief Search page table at address and return result
