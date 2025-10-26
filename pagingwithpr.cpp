@@ -6,16 +6,24 @@
 #include <fstream>
 #include <iostream>
 
+#include "pagetable.h"
+
+// teSTING!!
+int main() {
+  int bitsPerLevel[3] = {8, 8, 8};
+  PageTable* pt = new PageTable( bitsPerLevel, 3, 32 );
+  return 0;
+}
+
 /*
  * @brief Entry point of program; processes cl arguments, 
  *        reads file, and starts worker threads
  *
- * @arg int argc
- * @arg char** argv
+ * @arg int argc * @arg char** argv
  * @return int
  *
  */
-int main(int argc, char **argv) {
+int _main(int argc, char **argv) {
 
   using namespace std;
 
@@ -43,6 +51,7 @@ int main(int argc, char **argv) {
   
   filepath = argv[optind];
 
+
   // Open and process file
   ifstream file(filepath);  // open file at filepath
   string line;              // where file line is read to 
@@ -58,4 +67,5 @@ int main(int argc, char **argv) {
 
   file.close();
 
+  return 0;
 }
