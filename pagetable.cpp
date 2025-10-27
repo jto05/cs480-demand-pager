@@ -28,24 +28,13 @@ PageTable::PageTable(int* bitsPerLevel, int levelCount, int addressSpaceSize) {
       // ((1u << bitsPerLevel) - 1) << shift:  shifts set of bits to proper position
     this->bitMaskAry[idx] = (( 1u << bitsPerLevel[idx] ) - 1u) << shiftAry[idx];
 
-    // initialize rootLevel to inside node if level count is not 1
-    if (levelCount > 1) {
-      this->rootLevel = new Level{
-        this,                          // pageTablePtr
-        0,                             // currentdepth
-        new Level*[entryCount[0]],     // nextLevel
-        NULL,                          // map
-      };
+    this->rootLevel = new Level{
+      this,                          // pageTablePtr
+      0,                             // currentdepth
+      new Level*[entryCount[0]],     // nextLevel
+      new Map*[entryCount[0]]        // mapArr
+    };
 
-    } else { // initialize rootLevel to leaf node if level count is 1
-      this->rootLevel = new Level{
-        this,                          // pageTablePtr
-        0,                             // currentdepth
-        NULL,                          // nextLevel
-        new Map*[entryCount[0]],       // map
-      };
-
-    }
     
   }
 
@@ -55,32 +44,27 @@ PageTable::PageTable(int* bitsPerLevel, int levelCount, int addressSpaceSize) {
 
 
 Map* PageTable::searchMappedPfn(unsigned int virtualAddress) {
-  // walk through this page table!!1
   
   int entryIdx;
   Level* currLevel;
   Map* mapEntry;
 
-  virtualAddress = virtualAddress << offset; // add offset to virtualAddress
   currLevel = rootLevel;
 
+  // walk through this page table!!1
   for (int i = 0; i < levelCount; i++) { 
-    entryIdx = (virtualAddress & bitMaskAry[i]) >> shiftAry[i];
-    currLevel = currLevel->nextLevel[entryIdx];
-    
-    if ( currLevel == nullptr ) { // this means that address is unmapped
+    if ( currLevel == nullptr )  // this means that address is unmapped
       return nullptr; 
 
-    }
+    entryIdx = (virtualAddress & bitMaskAry[i]) >> shiftAry[i];
+    currLevel = currLevel->nextLevel[entryIdx];
 
     if ( i == levelCount - 1 ) { // reaches leaf node
-      mapEnty = currLevel->mapArr[entryIdx];
-
-      if ( mapEntry->validFlag != false ) 
+      mapEntry = currLevel->mapArr[entryIdx];
+      if ( mapEntry->validFlag ) 
         return mapEntry;
       else
         return nullptr; // mapEntry is invalid so return a nullptr
-
     }
 
   }
@@ -88,10 +72,62 @@ Map* PageTable::searchMappedPfn(unsigned int virtualAddress) {
   return nullptr; // kind of never runs into this statement
 }
 
-
 int PageTable::insertMapForVpn2Pfn(unsigned int virtualAddress, int frame) {
 
-  return 0; // no error occurs
+  int entryIdx;
+  Level* currLevel;
+  Map* mapEntry;
+
+  // walk through page table
+  currLevel = rootLevel;
+  for ( int i = 0; i < levelCount; i++ ) {
+
+    // apply bitmask and shift right to obtain only necessary bits
+    entryIdx = (virtualAddress & bitMaskAry[i]) >> shiftAry[i];
+
+    // if node is an inside node...
+    if ( i != levelCount - 1 ) {
+      // must initialize level if it is null
+      if ( currLevel->nextLevel[entryIdx] == nullptr ) {
+        currLevel->nextLevel[entryIdx] = new Level{
+          this,                                   
+          i + 1,                                       
+          (i + 1) == levelCount - 1 ? nullptr : new Level*[entryCount[i]],
+          (i + 1) != levelCount - 1 ? nullptr : new Map*[entryCount[i]],
+        };
+      }
+    }
+
+    // if we have reached the leaf node...
+    if ( i == levelCount - 1 ) {
+      mapEntry = currLevel->mapArr[entryIdx]; // get the map entry at entry idx
+
+      // iniitalize entry if its null
+      if ( mapEntry == nullptr ) {
+        currLevel->mapArr[entryIdx] = new Map{
+          frame,
+          true,
+        };
+        return 0; // executed succesfully
+      } 
+
+      // else replace frame based on entry's validFlag
+      else {
+        if ( !mapEntry->validFlag )
+          return 1; // executed UNsucessfully; return error
+        else {
+          mapEntry->frameNumber = frame;
+          return 0; // executed successfully
+        }
+      }
+    }
+
+    // step into next entry at the new entryIdx
+    currLevel = currLevel->nextLevel[entryIdx];
+
+  }
+
+  return 1; // impossible code reach, so return an error if i reach it
 }
 
 
