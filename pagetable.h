@@ -28,7 +28,7 @@ struct Level {
   int currentDepth;
 
   Level** nextLevel;  // arr of Level objects that represent the next levels
-  Map* mapArr;        // 
+  Map** mapArr;        // 
 };
 
 /*
@@ -41,6 +41,7 @@ class PageTable {
     int* shiftAry;              // array of num of bits to shift indexed by level
     int* entryCount;             // array of num of next level entries indexed by level
     int pageSize;               // size of each page
+    int offset;
     Level* rootLevel;            // root node of pagte table's level tree
   public:
     /*
