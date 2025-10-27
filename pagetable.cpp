@@ -31,8 +31,8 @@ PageTable::PageTable(int* bitsPerLevel, int levelCount, int addressSpaceSize) {
     this->rootLevel = new Level{
       this,                          // pageTablePtr
       0,                             // currentdepth
-      new Level*[entryCount[0]],     // nextLevel
-      new Map*[entryCount[0]]        // mapArr
+      levelCount == 1 ? nullptr : new Level*[entryCount[0]],
+      levelCount == 1 ? new Map*[entryCount[0]] : nullptr,
     };
 
     
@@ -49,15 +49,14 @@ Map* PageTable::searchMappedPfn(unsigned int virtualAddress) {
   Level* currLevel;
   Map* mapEntry;
 
-  currLevel = rootLevel;
 
   // walk through this page table!!1
+  currLevel = rootLevel;
   for (int i = 0; i < levelCount; i++) { 
     if ( currLevel == nullptr )  // this means that address is unmapped
       return nullptr; 
 
     entryIdx = (virtualAddress & bitMaskAry[i]) >> shiftAry[i];
-    currLevel = currLevel->nextLevel[entryIdx];
 
     if ( i == levelCount - 1 ) { // reaches leaf node
       mapEntry = currLevel->mapArr[entryIdx];
@@ -67,6 +66,7 @@ Map* PageTable::searchMappedPfn(unsigned int virtualAddress) {
         return nullptr; // mapEntry is invalid so return a nullptr
     }
 
+    currLevel = currLevel->nextLevel[entryIdx];
   }
   
   return nullptr; // kind of never runs into this statement
