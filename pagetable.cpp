@@ -1,9 +1,6 @@
 #include "pagetable.h"
 
-#include <iostream>
 #include <cmath>
-
-#include "vaddr_tracereader.h"
 
 PageTable::PageTable(int* bitsPerLevel, int levelCount, int addressSpaceSize) {
 
@@ -56,10 +53,15 @@ Map* PageTable::searchMappedPfn(unsigned int virtualAddress) {
     if ( currLevel == nullptr )  // this means that address is unmapped
       return nullptr; 
 
-    entryIdx = (virtualAddress & bitMaskAry[i]) >> shiftAry[i];
+    entryIdx = extractVPNFromVirtualAddress(virtualAddress, bitMaskAry[i], shiftAry[i]);
 
     if ( i == levelCount - 1 ) { // reaches leaf node
       mapEntry = currLevel->mapArr[entryIdx];
+
+      if ( mapEntry == nullptr ) {
+        return nullptr;
+      }
+
       if ( mapEntry->validFlag ) 
         return mapEntry;
       else
@@ -82,8 +84,7 @@ int PageTable::insertMapForVpn2Pfn(unsigned int virtualAddress, int frame) {
   currLevel = rootLevel;
   for ( int i = 0; i < levelCount; i++ ) {
 
-    // apply bitmask and shift right to obtain only necessary bits
-    entryIdx = (virtualAddress & bitMaskAry[i]) >> shiftAry[i];
+    entryIdx = extractVPNFromVirtualAddress(virtualAddress, bitMaskAry[i], shiftAry[i]);
 
     // if node is an inside node...
     if ( i != levelCount - 1 ) {
@@ -92,8 +93,8 @@ int PageTable::insertMapForVpn2Pfn(unsigned int virtualAddress, int frame) {
         currLevel->nextLevel[entryIdx] = new Level{
           this,                                   
           i + 1,                                       
-          (i + 1) == levelCount - 1 ? nullptr : new Level*[entryCount[i]],
-          (i + 1) != levelCount - 1 ? nullptr : new Map*[entryCount[i]],
+          (i + 1) == levelCount - 1 ? nullptr : new Level*[entryCount[i+1]],
+          (i + 1) != levelCount - 1 ? nullptr : new Map*[entryCount[i+1]],
         };
       }
     }
@@ -134,5 +135,29 @@ int PageTable::insertMapForVpn2Pfn(unsigned int virtualAddress, int frame) {
 unsigned int PageTable::extractVPNFromVirtualAddress(unsigned int virtualAddress,
                                                      unsigned int mask,
                                                      unsigned int shift) {
-  return 1u;
+  return (virtualAddress & mask) >> shift;
+}
+
+
+unsigned long int PageTable::getTotalPgTableEntries( Level* currLevel ) {
+  unsigned long int sum;
+  int depth;
+
+  depth = currLevel->currentDepth;
+  sum = entryCount[depth];
+  
+  if ( depth != levelCount - 1 
+      && currLevel->nextLevel != nullptr ) {
+    for ( int i = 0; i < entryCount[depth]; i++ ) {
+      if ( currLevel->nextLevel[i] != nullptr ) {
+        sum += getTotalPgTableEntries(currLevel->nextLevel[i]);
+      }
+    }
+  }
+
+  return sum;
+}
+
+int PageTable::getPageSize() {
+  return pageSize;
 }

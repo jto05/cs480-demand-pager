@@ -1,0 +1,30 @@
+#ifndef PAGER_H
+#define PAGER_H
+
+#include <cstdio>
+
+#include "pagetable.h"
+#include "log_helpers.h"
+
+class Pager {
+private:
+  PageTable *pageTable;
+  FILE* filePtr;
+  unsigned int currVA;
+  int nextFreeFrame;
+  int availableFrames;
+  unsigned int numOfPageReplaces;
+  unsigned int pageTableHits;
+  unsigned int numOfAddresses;
+  unsigned int numOfFramesAllocated;
+  unsigned long int pgtableEntries;
+
+public:
+  Pager(PageTable *pt, FILE *fp, int availableFrames);
+  void run();
+  void log();
+  void pageReplacement();
+
+};
+
+#endif

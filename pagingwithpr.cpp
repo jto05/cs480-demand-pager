@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <cstdio>
 #include <string.h>
 
 #include <string>
@@ -7,11 +8,22 @@
 #include <iostream>
 
 #include "pagetable.h"
+#include "pager.h"
+#include "vaddr_tracereader.h"
+#include "log_helpers.h"
 
-// teSTING!!
-int main() {
+/*
+ * @brief TESTING!!!
+ *
+ */
+int _main() {
   int bitsPerLevel[3] = {8, 8, 8};
-  PageTable* pt = new PageTable( bitsPerLevel, 3, 32 );
+  PageTable* pt = new PageTable(bitsPerLevel, 3, 32);
+  unsigned int vaddr = 4278189762;
+  pt->insertMapForVpn2Pfn(vaddr, 3);
+
+  int n = pt->searchMappedPfn(vaddr)->frameNumber;
+  std::cout << n << std::endl;
   return 0;
 }
 
@@ -23,13 +35,13 @@ int main() {
  * @return int
  *
  */
-int _main(int argc, char **argv) {
+int main(int argc, char **argv) {
 
   using namespace std;
 
   int option;                      // command line switch 
   int idx;                         // general index 
-  string filepath;                 // filepath of traces
+  char* filepath;                 // filepath of traces
 
 
   // Get any optional flag arguments
@@ -53,19 +65,27 @@ int _main(int argc, char **argv) {
 
 
   // Open and process file
-  ifstream file(filepath);  // open file at filepath
-  string line;              // where file line is read to 
+  FILE* fp = fopen( filepath, "r" );
+  Pager* pager;
+  PageTable* pt;
   
-  if (!file.is_open()) { // return with error if unable to open file
-    printf("Unable to open <<%s>>\n", filepath.c_str() );
+  if (!fp) { // return with error if unable to open file
+    printf("Unable to open <<%s>>\n", filepath );
     return 0;
   }
 
-  while ( getline(file, line) ) { 
-    // READ DAT FILE!!!!
-  } 
+  int bitsPerLevel[3] = {4, 8, 8};
 
-  file.close();
+  pt = new PageTable( bitsPerLevel, 3, 32  );
+
+  pager = new Pager(pt, fp, 999999);
+  pager->run();
+  pager->log(  );
+
+
+  fclose(fp);
+
+
 
   return 0;
 }
