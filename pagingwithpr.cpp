@@ -107,7 +107,15 @@ int main(int argc, char **argv) {
 
   filepath = argv[optind];
 
-  
+  // handle errors for bits per level
+  if ( argc - optind - 1 < 1) {
+    printf("Level 0 page table must be at least 1 bit\n");
+    return 0;
+  } else if ( argc - optind - 1 > 28 ) {
+    printf("Too many bits used in page tables\n");
+    return 0;
+  }
+
   vector<int> bitsPerLevel;
   idx = optind + 1;
   do {
@@ -115,14 +123,6 @@ int main(int argc, char **argv) {
     idx++;
   } while ( idx != argc );
 
-  // handle errors for bits per level
-  if ( bitsPerLevel.size() < 1 ) {
-    printf("Level 0 page table must be at least 1 bit\n");
-    return 0;
-  } else if ( bitsPerLevel.size() > 28 ){
-    printf("Too many bits used in page tables\n");
-    return 0;
-  }
 
   // Open and process file
   FILE* fp = fopen( filepath, "r" );
