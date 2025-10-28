@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
         logOptions.vpns_pfn = true;
         logOptions.summary = false;
 
-      } else if (  strcmp(optarg, "vpns2pfn_pr") == 0 ) {
+      } else if (  strcmp(optarg, "vpn2pfn_pr") == 0 ) {
         logOptions.vpn2pfn_with_pagereplace = true;
         logOptions.summary = false;
 
@@ -107,21 +107,31 @@ int main(int argc, char **argv) {
 
   filepath = argv[optind];
 
-  // handle errors for bits per level
-  if ( argc - optind - 1 < 1) {
-    printf("Level 0 page table must be at least 1 bit\n");
-    return 0;
-  } else if ( argc - optind - 1 > 28 ) {
+  // get bits per level
+  vector<int> bitsPerLevel;
+  idx = optind + 1;
+  int count = 0;
+  do {
+    if ( atoi(argv[idx]) < 1 )  {
+      printf("Level %d page table must be at least 1 bit\n", count);
+      return 0;
+    }
+
+    bitsPerLevel.push_back( atoi(argv[idx]) );
+    idx++;
+    count++;
+  } while ( idx != argc );
+
+  // sum total bits
+  int totalBits = 0;
+  for ( int bits : bitsPerLevel ) {
+    totalBits += bits;
+  }
+
+  if ( totalBits > 28 ) {
     printf("Too many bits used in page tables\n");
     return 0;
   }
-
-  vector<int> bitsPerLevel;
-  idx = optind + 1;
-  do {
-    bitsPerLevel.push_back( atoi(argv[idx]) );
-    idx++;
-  } while ( idx != argc );
 
 
   // Open and process file
