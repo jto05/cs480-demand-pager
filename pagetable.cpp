@@ -28,8 +28,8 @@ PageTable::PageTable(int* bitsPerLevel, int levelCount, int addressSpaceSize) {
     this->rootLevel = new Level{
       this,                          // pageTablePtr
       0,                             // currentdepth
-      levelCount == 1 ? nullptr : new Level*[entryCount[0]],
-      levelCount == 1 ? new Map*[entryCount[0]] : nullptr,
+      levelCount == 1 ? nullptr : new Level*[entryCount[0]]{},
+      levelCount == 1 ? new Map*[entryCount[0]]{} : nullptr,
     };
 
     
@@ -93,8 +93,8 @@ int PageTable::insertMapForVpn2Pfn(unsigned int virtualAddress, int frame) {
         currLevel->nextLevel[entryIdx] = new Level{
           this,                                   
           i + 1,                                       
-          (i + 1) == levelCount - 1 ? nullptr : new Level*[entryCount[i+1]],
-          (i + 1) != levelCount - 1 ? nullptr : new Map*[entryCount[i+1]],
+          (i + 1) == levelCount - 1 ? nullptr : new Level*[entryCount[i+1]]{},
+          (i + 1) != levelCount - 1 ? nullptr : new Map*[entryCount[i+1]]{},
         };
       }
     }
@@ -114,12 +114,9 @@ int PageTable::insertMapForVpn2Pfn(unsigned int virtualAddress, int frame) {
 
       // else replace frame based on entry's validFlag
       else {
-        if ( !mapEntry->validFlag )
-          return 1; // executed UNsucessfully; return error
-        else {
-          mapEntry->frameNumber = frame;
-          return 0; // executed successfully
-        }
+        mapEntry->frameNumber = frame;
+        mapEntry->validFlag = true;
+        return 0;
       }
     }
 
@@ -131,11 +128,19 @@ int PageTable::insertMapForVpn2Pfn(unsigned int virtualAddress, int frame) {
   return 1; // impossible code reach, so return an error if i reach it
 }
 
-
 unsigned int PageTable::extractVPNFromVirtualAddress(unsigned int virtualAddress,
                                                      unsigned int mask,
                                                      unsigned int shift) {
   return (virtualAddress & mask) >> shift;
+}
+
+unsigned int PageTable::extractFullVPNFromVirtualAddress( unsigned int virtualAddress ) {
+  unsigned int fullVPNBitMask = 0;
+  for ( int i = 0; i < levelCount; i++ ) {
+    fullVPNBitMask |= bitMaskAry[i];
+  }
+
+  return extractVPNFromVirtualAddress( virtualAddress, fullVPNBitMask, offset );
 }
 
 

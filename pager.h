@@ -13,6 +13,8 @@ private:
   unsigned int currVA;
   int nextFreeFrame;
   int availableFrames;
+  int NFUInterval;
+  LogOptionsType logOptions;
   unsigned int numOfPageReplaces;
   unsigned int pageTableHits;
   unsigned int numOfAddresses;
@@ -20,7 +22,7 @@ private:
   unsigned long int pgtableEntries;
 
 public:
-  Pager(PageTable *pt, FILE *fp, int availableFrames);
+  Pager(PageTable *pt, FILE *fp,int numOfAddresses, int availableFrames, int interval, LogOptionsType logOptions);
   void run();
   void log();
   void pageReplacement();

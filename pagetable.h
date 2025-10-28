@@ -35,14 +35,13 @@ struct Level {
  * PageTable
  */
 class PageTable {
-  private:
+  public:
     int levelCount;             // number of levels
     unsigned int* bitMaskAry;   // array of bitmasks indexed by level
     int* shiftAry;              // array of num of bits to shift indexed by level
     int* entryCount;            // array of num of next level entries indexed by level
     int pageSize;               // size of each page
     int offset;
-  public:
     Level* rootLevel;           // root node of pagte table's level tree
     /*
      * @brief constructor for page table
@@ -83,6 +82,8 @@ class PageTable {
     unsigned int extractVPNFromVirtualAddress(unsigned int virtualAddress,
                                                unsigned int mask,
                                                unsigned int shift);
+
+    unsigned int extractFullVPNFromVirtualAddress( unsigned int virtualAddress ); 
 
     unsigned long int getTotalPgTableEntries( Level* currLevel);
 

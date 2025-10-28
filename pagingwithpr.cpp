@@ -42,19 +42,35 @@ int main(int argc, char **argv) {
   int option;                      // command line switch 
   int idx;                         // general index 
   char* filepath;                 // filepath of traces
+  int numOfAddresses = -1;  
+  int numOfPhysicalFrames = 999999;  
+  int updateInterval = 10;
+  LogOptionsType logOptions = LogOptionsType{
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+  };
 
 
   // Get any optional flag arguments
-  while ( (option = getopt(argc, argv, "s:q:")) != -1 ) {
+  while ( (option = getopt(argc, argv, "n:f:b:l:")) != -1 ) {
 
     switch ( option )  {
     case 'n': // Process only the first N memory accesses / references
+      numOfAddresses = atoi(optarg)
       break;
 
     case 'f': // Number of available physical frames
+      numOfPhysicalFrames = atoi(optarg)
       break;
 
     case 'b': // Number of memory accesses between bitstring updates
+      break;
+
+    case 'l': // Log option type
       break;
 
     }
@@ -74,13 +90,16 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  int bitsPerLevel[3] = {4, 8, 8};
 
-  pt = new PageTable( bitsPerLevel, 3, 32  );
+// ./pagingwithpr -n 100000 -f 40 -l summary trace.tr 4 4 10
+// ./pagingwithpr -n 50 -f 20 -b 10 -l vpn2pfn_pr trace.tr 6 6 8
+  int bitsPerLevel[3] = {4, 4, 10};
 
-  pager = new Pager(pt, fp, 999999);
+  pt = new PageTable( bitsPerLevel, 3, 32 );
+
+  pager = new Pager(pt, fp, 100000, 40, 10);
   pager->run();
-  pager->log(  );
+  pager->log();
 
 
   fclose(fp);
