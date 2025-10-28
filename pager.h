@@ -22,7 +22,15 @@ private:
   unsigned long int pgtableEntries;
 
 public:
-  Pager(PageTable *pt, FILE *fp,int numOfAddresses, int availableFrames, int interval, LogOptionsType logOptions);
+  Pager(PageTable *pt, 
+      FILE *fp,
+      int numOfAddresses, 
+      int availableFrames, 
+      int interval, 
+      LogOptionsType logOptions);
+
+  void log_vpns_to_pfns(int,unsigned int, int);
+
   void run();
   void log();
   void pageReplacement();

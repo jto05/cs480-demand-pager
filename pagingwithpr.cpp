@@ -6,26 +6,12 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <cstring>
 
 #include "pagetable.h"
 #include "pager.h"
 #include "vaddr_tracereader.h"
 #include "log_helpers.h"
-
-/*
- * @brief TESTING!!!
- *
- */
-int _main() {
-  int bitsPerLevel[3] = {8, 8, 8};
-  PageTable* pt = new PageTable(bitsPerLevel, 3, 32);
-  unsigned int vaddr = 4278189762;
-  pt->insertMapForVpn2Pfn(vaddr, 3);
-
-  int n = pt->searchMappedPfn(vaddr)->frameNumber;
-  std::cout << n << std::endl;
-  return 0;
-}
 
 /*
  * @brief Entry point of program; processes cl arguments, 
@@ -45,14 +31,14 @@ int main(int argc, char **argv) {
   int numOfAddresses = -1;  
   int numOfPhysicalFrames = 999999;  
   int updateInterval = 10;
-  LogOptionsType logOptions = LogOptionsType{
-    false,
-    false,
-    false,
-    false,
-    false,
-    true,
-  };
+
+  LogOptionsType logOptions;
+  logOptions.pagetable_bitmasks = false;
+  logOptions.addressTranslation = false;
+  logOptions.vpns_pfn = false;
+  logOptions.vpn2pfn_with_pagereplace = false;
+  logOptions.offset = false;
+  logOptions.summary = true;
 
 
   // Get any optional flag arguments
@@ -60,25 +46,58 @@ int main(int argc, char **argv) {
 
     switch ( option )  {
     case 'n': // Process only the first N memory accesses / references
-      numOfAddresses = atoi(optarg)
+      numOfAddresses = atoi(optarg);
       break;
 
     case 'f': // Number of available physical frames
-      numOfPhysicalFrames = atoi(optarg)
+      numOfPhysicalFrames = atoi(optarg);
       break;
 
     case 'b': // Number of memory accesses between bitstring updates
+      updateInterval = atoi(optarg);
       break;
 
     case 'l': // Log option type
+
+      if ( strcmp(optarg, "bitmasks") == 0 ) {
+        logOptions.pagetable_bitmasks = true;
+        logOptions.summary = false;
+
+      } else if (  strcmp(optarg, "va2pa") == 0 ) {
+        logOptions.addressTranslation = true;
+        logOptions.summary = false;
+
+      } else if (  strcmp(optarg, "vpns_pfn")  == 0) {
+        logOptions.vpns_pfn = true;
+        logOptions.summary = false;
+
+      } else if (  strcmp(optarg, "vpns2pfn_pr") == 0 ) {
+        logOptions.vpn2pfn_with_pagereplace = true;
+        logOptions.summary = false;
+
+      } else if ( strcmp(optarg, "offset") == 0) {
+        logOptions.offset = true;
+        logOptions.summary = false;
+
+      } else {
+
+      }
+
+
       break;
 
     }
   }
 
-  
   filepath = argv[optind];
 
+  
+  vector<int> bitsPerLevel;
+  idx = optind + 1;
+  do {
+    bitsPerLevel.push_back( atoi(argv[idx]) );
+    idx++;
+  } while ( idx != argc );
 
   // Open and process file
   FILE* fp = fopen( filepath, "r" );
@@ -93,14 +112,24 @@ int main(int argc, char **argv) {
 
 // ./pagingwithpr -n 100000 -f 40 -l summary trace.tr 4 4 10
 // ./pagingwithpr -n 50 -f 20 -b 10 -l vpn2pfn_pr trace.tr 6 6 8
-  int bitsPerLevel[3] = {4, 4, 10};
 
-  pt = new PageTable( bitsPerLevel, 3, 32 );
+  pt = new PageTable( bitsPerLevel.data(), bitsPerLevel.size(), 32 );
 
-  pager = new Pager(pt, fp, 100000, 40, 10);
-  pager->run();
-  pager->log();
+  pager = new Pager(pt, fp, numOfAddresses, numOfPhysicalFrames, updateInterval, logOptions);
 
+  // bitmasks
+  if ( logOptions.pagetable_bitmasks ) {
+    log_bitmasks( pt->levelCount, pt->bitMaskAry );
+  } 
+
+  // all other log options
+  else {
+    pager->run();
+  }
+
+
+  if ( logOptions.summary )
+    pager->log();
 
   fclose(fp);
 

@@ -9,14 +9,22 @@
 
 using namespace std;
 
-Pager::Pager(PageTable *pt, FILE *fp, int numOfAddresses, int availableFrames, int NFUInterval) { 
+Pager::Pager(PageTable *pt, 
+    FILE *fp, 
+    int numOfAddresses, 
+    int availableFrames, 
+    int NFUInterval, 
+    LogOptionsType logOptions) { 
+
   this->pageTable = pt;
   this->filePtr = fp;
   this->nextFreeFrame = 0;
   this->availableFrames = availableFrames;
   this->numOfAddresses = numOfAddresses;
   this->NFUInterval = NFUInterval;
+  this->logOptions = logOptions;
 }
+
 
 void Pager::run() {
 
@@ -54,8 +62,6 @@ void Pager::run() {
     } else{
       continue; // skip when no address is found
     }
-
-
 
     mapEntry = pageTable->searchMappedPfn(currVA);
     if (mapEntry) {
@@ -125,13 +131,47 @@ void Pager::run() {
 
     }
 
-    log_mapping(currVPN, pframe, vpn_replaced, victim_bitstring, pthit);
+    if ( logOptions.addressTranslation ) {
+      unsigned int pa = pframe;
+      unsigned int offMask = ( 1 << pageTable->offset ) - 1;
+      unsigned int offsetBits = ( currVA & offMask );
+      pa = (pframe << pageTable->offset) | offsetBits;
+
+      log_va2pa(currVA, pa);
+    }
+
+    if ( logOptions.offset ) {
+      unsigned int offMask = ( 1 << pageTable->offset ) - 1;
+      unsigned int offsetBits = currVA & offMask;
+
+      print_num_inHex(offsetBits);
+    }
+
+    if ( logOptions.vpns_pfn ) {
+      log_vpns_to_pfns(pageTable->levelCount, currVA, pframe );
+
+    }
+
+    if (logOptions.vpn2pfn_with_pagereplace)
+      log_mapping(currVPN, pframe, vpn_replaced, victim_bitstring, pthit);
 
   }
 
   numOfAddresses = addressCounter;
 
   pgtableEntries = pageTable->getTotalPgTableEntries( pageTable->rootLevel );
+}
+
+void Pager::log_vpns_to_pfns(int levels, unsigned int va, int pa) {
+  uint32_t vpns[levels];
+  for ( int i = 0; i < levels; i ++ ) {
+    vpns[i] = pageTable->extractVPNFromVirtualAddress( va, 
+                                    pageTable->bitMaskAry[i],  
+                                    pageTable->shiftAry[i] );
+  }
+
+  log_vpns_pfn(levels, vpns, pa);
+  
 
 }
 
