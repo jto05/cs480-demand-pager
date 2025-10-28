@@ -47,14 +47,32 @@ int main(int argc, char **argv) {
     switch ( option )  {
     case 'n': // Process only the first N memory accesses / references
       numOfAddresses = atoi(optarg);
+
+      if ( numOfAddresses < 1 ) {
+        printf("Number of memory accesses must be a number and greater than 0\n");
+        return 0;
+      }
+
       break;
 
     case 'f': // Number of available physical frames
       numOfPhysicalFrames = atoi(optarg);
+
+      if ( numOfPhysicalFrames < 1 ) {
+        printf("Number of available frames must be a number and greater than 0\n");
+        return 0;
+      }
+
       break;
 
     case 'b': // Number of memory accesses between bitstring updates
       updateInterval = atoi(optarg);
+
+      if ( updateInterval < 1 ) {
+        printf("Bit string update interval must be a number and greater than 0\n");
+        return 0;
+      }
+
       break;
 
     case 'l': // Log option type
@@ -83,9 +101,7 @@ int main(int argc, char **argv) {
 
       }
 
-
       break;
-
     }
   }
 
@@ -98,6 +114,15 @@ int main(int argc, char **argv) {
     bitsPerLevel.push_back( atoi(argv[idx]) );
     idx++;
   } while ( idx != argc );
+
+  // handle errors for bits per level
+  if ( bitsPerLevel.size() < 1 ) {
+    printf("Level 0 page table must be at least 1 bit\n");
+    return 0;
+  } else if ( bitsPerLevel.size() > 28 ){
+    printf("Too many bits used in page tables\n");
+    return 0;
+  }
 
   // Open and process file
   FILE* fp = fopen( filepath, "r" );
