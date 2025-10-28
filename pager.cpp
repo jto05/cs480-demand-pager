@@ -36,7 +36,7 @@ void Pager::run() {
   Map *mapEntry;
   NFUFrame* victim;
   int err;
-  int addressCounter;
+  int addressCounter = 0;
 
   p2AddrTr mtrace;
   int c;
@@ -48,20 +48,18 @@ void Pager::run() {
   bool pthit;
       
 
-  while ( !feof(filePtr) ) {
-    vpn_replaced = -1;
-
+  //while ( !feof(filePtr) ) {
+  while ( NextAddress(filePtr, &mtrace) ) { 
     if ( addressCounter == numOfAddresses ) {
       break;
     }
 
-    if ( NextAddress(filePtr, &mtrace) ) {
-      currVA = mtrace.addr;
-      currVPN = pageTable->extractFullVPNFromVirtualAddress(currVA);
-      addressCounter++; // update counter
-    } else{
-      continue; // skip when no address is found
-    }
+    currVA = mtrace.addr;
+    currVPN = pageTable->extractFullVPNFromVirtualAddress(currVA);
+    addressCounter++; // update counter
+
+    vpn_replaced = -1;
+
 
     mapEntry = pageTable->searchMappedPfn(currVA);
     if (mapEntry) {
@@ -92,6 +90,8 @@ void Pager::run() {
 
         // new entry added, so new frame added to loadedPages!!!
         pageReplacer->addNFUFrame(currVPN, nextFreeFrame);
+        numOfFramesAllocated++;
+
 
         // logging
         pthit = false;
