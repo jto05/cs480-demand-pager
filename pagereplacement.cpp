@@ -1,12 +1,37 @@
+// Names: Kaylee Muckerman and Julian To
+// REDID: 130526910 and 130405272
+
+/*
+ * PageReplacer source file; contains methods of page replacer object 
+ *    that calculates and keeps track of pages for replacmeent
+ *
+ */
 #include "pagereplacement.h"
 
 
+/*
+* PageReplacer()
+*
+* @brief constructor for PageReplacer
+*
+* @param updateInterval
+*
+*/
 PageReplacer::PageReplacer(int interval) {
   this->interval = interval;
 }
 
-void PageReplacer::addNFUFrame(unsigned int vAddr, int pfn) {
-  NFUFrame* f = new NFUFrame{
+
+/*
+* addFrameTableEntry
+*
+* @brief virtualAddress of loaded page and its corresponding pfn
+*
+* @return void
+*
+*/
+void PageReplacer::addFrameTableEntry(unsigned int vAddr, int pfn) {
+  FrameTableEntry* f = new FrameTableEntry{
         vAddr,      // vpn
         pfn,        // pfn
         1u<<15,     // bitStr
@@ -14,6 +39,19 @@ void PageReplacer::addNFUFrame(unsigned int vAddr, int pfn) {
   loadedPages.push_back(f);
 }
 
+/*
+* updateLoadedPages()
+*
+* @brief process the loaded pages by updating their bitstring every update interval and
+*          updating the lastAccesedTime of each page
+*
+* @param counter the num of addressed processed
+* @param current virtual address 
+* @param vector of accessedVPNs during update interval
+*
+* @return void
+*
+*/
 void PageReplacer::updateLoadedPages(int counter, 
     unsigned int currVAddr,
     vector<unsigned int> &accessedVPNs) {
@@ -21,7 +59,7 @@ void PageReplacer::updateLoadedPages(int counter,
   bool accessed;
 
   // update lastAccessTime for each loaded page
-  for ( NFUFrame *fp : loadedPages ) {
+  for ( FrameTableEntry *fp : loadedPages ) {
 
     // if vAddr was the one currently accessed, js skip dat hoe and set it to 0
     if ( fp->vpn == currVAddr ) {
@@ -34,7 +72,7 @@ void PageReplacer::updateLoadedPages(int counter,
 
   if ( counter % interval == 0 ) {
     // update bitstring for each loaded page
-    for ( NFUFrame *fp : loadedPages ) {
+    for ( FrameTableEntry *fp : loadedPages ) {
 
       fp->bitStr = fp->bitStr >> 1; // first right shift all bitstr
       accessed = false;
@@ -54,12 +92,19 @@ void PageReplacer::updateLoadedPages(int counter,
   } 
 }
 
-
-NFUFrame* PageReplacer::chooseVictimFrame() {
-  NFUFrame* victimPage = nullptr;
+/*
+ * chooseVictimPage()
+ *
+ * @brief returns a frame entry most optimal to replace 
+ *
+ * @return FrameTableEntry ptr
+ *
+ */
+FrameTableEntry* PageReplacer::chooseVictimFrame() {
+  FrameTableEntry* victimPage = nullptr;
   int idx;
 
-  for ( int i = 0; i < loadedPages.size(); i++ ) {
+  for ( size_t i = 0; i < loadedPages.size(); i++ ) {
 
     // initialize victimPage if null to curr frame
     if ( victimPage == nullptr ) {

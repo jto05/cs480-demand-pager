@@ -1,7 +1,22 @@
+// Names: Kaylee Muckerman and Julian To
+// REDID: 130526910 and 130405272
+
+/*
+ * Page table source file; contains methods necessary for pageTable operations
+ *
+ */
 #include "pagetable.h"
 
 #include <cmath>
 
+/*
+ * @brief Constructor for page table
+ *
+ * @param int* bitsPerLevel is an array of amount of bits per level
+ * @param int* levelCount is the number of array elements in bitsPerLevel
+ * @param int addressSpaceSize ( 32 )
+ *
+ */
 PageTable::PageTable(int* bitsPerLevel, int levelCount, int addressSpaceSize) {
 
   // get level count for future reference
@@ -40,6 +55,15 @@ PageTable::PageTable(int* bitsPerLevel, int levelCount, int addressSpaceSize) {
 }
 
 
+/* 
+ * searchMappedPfn()
+ *
+ * @brief Search page table at address and return result
+ *
+ * @param unsigned int virtualAddress
+ *
+ * @return Map* ptr
+ */
 Map* PageTable::searchMappedPfn(unsigned int virtualAddress) {
   
   int entryIdx;
@@ -74,6 +98,16 @@ Map* PageTable::searchMappedPfn(unsigned int virtualAddress) {
   return nullptr; // kind of never runs into this statement
 }
 
+/* 
+ * insertMapForVpn2Pfn()
+ *
+ * @brief Insert VPN with VPN to PFN mapping OR update an existing VPN to FPN mapping
+ *
+ * @param virtualAddress
+ * @param frame
+ *
+ * @return errorCode 
+ */
 int PageTable::insertMapForVpn2Pfn(unsigned int virtualAddress, int frame) {
 
   int entryIdx;
@@ -128,12 +162,33 @@ int PageTable::insertMapForVpn2Pfn(unsigned int virtualAddress, int frame) {
   return 1; // impossible code reach, so return an error if i reach it
 }
 
+/* 
+* extractVPNFromVirtualAddress()
+*
+* @brief Get VPN by applying bit mask and shift to given address
+*
+* @param virtualAddress
+* @param mask
+* @param shift
+*
+* @return virtual page number 
+*/
 unsigned int PageTable::extractVPNFromVirtualAddress(unsigned int virtualAddress,
                                                      unsigned int mask,
                                                      unsigned int shift) {
   return (virtualAddress & mask) >> shift;
 }
 
+/* 
+* extractFullVPNFromVirtualAddress()
+*
+* @brief A wrapper to extractVPNFromVirtualAddress to easily obtain
+*          the full VPN given a virtualAddress
+*
+* @param virtualAddress
+*
+* @return full virtual page numbeer 
+*/
 unsigned int PageTable::extractFullVPNFromVirtualAddress( unsigned int virtualAddress ) {
   unsigned int fullVPNBitMask = 0;
   for ( int i = 0; i < levelCount; i++ ) {
@@ -143,7 +198,15 @@ unsigned int PageTable::extractFullVPNFromVirtualAddress( unsigned int virtualAd
   return extractVPNFromVirtualAddress( virtualAddress, fullVPNBitMask, offset );
 }
 
-
+/* 
+* getTotalPgTableEntries()
+*
+* @brief A recursive function that counts every entry in page table
+*
+* @param Level* to starting level 
+*
+* @return the total amount of page entries
+*/
 unsigned long int PageTable::getTotalPgTableEntries( Level* currLevel ) {
   unsigned long int sum;
   int depth;
@@ -163,6 +226,3 @@ unsigned long int PageTable::getTotalPgTableEntries( Level* currLevel ) {
   return sum;
 }
 
-int PageTable::getPageSize() {
-  return pageSize;
-}

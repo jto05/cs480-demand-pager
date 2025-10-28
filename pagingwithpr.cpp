@@ -1,3 +1,12 @@
+// Names: Kaylee Muckerman and Julian To
+// REDID: 130526910 and 130405272
+
+/*
+ * Main entry point of program; processes CLI arguments and 
+ *  initializes pager object and page table according to arguments
+ *
+ */
+
 #include <stdio.h>
 #include <unistd.h>
 #include <cstdio>
@@ -15,9 +24,9 @@
 
 /*
  * @brief Entry point of program; processes cl arguments, 
- *        reads file, and starts worker threads
+ *        begins pager simulation
  *
- * @arg int argc * @arg char** argv
+ @arg int argc * @arg char** argv
  * @return int
  *
  */

@@ -1,5 +1,7 @@
-# Author: Julian To
-# REDID: 130405272
+# Names: Kaylee Muckerman and Julian To
+# REDID: 130526910 and 130405272
+
+# Makefile for pager assigment
 
 CXX = g++
 CXXFLAGS = -std=c++11 -Wall -g3 -c

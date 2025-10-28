@@ -1,3 +1,11 @@
+// Names: Kaylee Muckerman and Julian To
+// REDID: 130526910 and 130405272
+
+/*
+ * Source code for Pager class; simulates MMU and demand paging from OS
+ *
+ */
+
 #include "pager.h"
 
 #include <cstdio>
@@ -9,6 +17,17 @@
 
 using namespace std;
 
+/*
+ * Pager()
+ * 
+ * @brief Constructor for pager object
+ *
+ * @param FILE* file pointer to current working file
+ * @param int numOfAddresses
+ * @param int availableFrames
+ * @param int updateInterval for page replacement
+ * @param LogOptionsType logOptions
+ */
 Pager::Pager(PageTable *pt, 
     FILE *fp, 
     int numOfAddresses, 
@@ -26,31 +45,37 @@ Pager::Pager(PageTable *pt,
 }
 
 
+/*
+ * run()
+ * 
+ * @brief main loop of pager object; the main function called by user
+ *
+ * @return void
+ *
+ */
 void Pager::run() {
 
+  // non-member variables used exclusively in run()
   PageReplacer *pageReplacer = new PageReplacer(NFUInterval);
   vector<unsigned int> accessedVPNs;
   int freedPfn;
   unsigned int currVPN;
-
   Map *mapEntry;
-  NFUFrame* victim;
-  int err;
+  FrameTableEntry* victim;
   int addressCounter = 0;
 
-  p2AddrTr mtrace;
-  int c;
 
-  // logging
+  // vaddr_tracereadr variables
+  p2AddrTr mtrace;
+
+  // logging variables
   unsigned int pframe;
   int vpn_replaced;
   unsigned int victim_bitstring;
   bool pthit;
       
-
-  //while ( !feof(filePtr) ) {
   while ( NextAddress(filePtr, &mtrace) ) { 
-    if ( addressCounter == numOfAddresses ) {
+    if ( addressCounter == (int) numOfAddresses ) {
       break;
     }
 
@@ -89,7 +114,7 @@ void Pager::run() {
         pageTable->insertMapForVpn2Pfn(currVA, nextFreeFrame);
 
         // new entry added, so new frame added to loadedPages!!!
-        pageReplacer->addNFUFrame(currVPN, nextFreeFrame);
+        pageReplacer->addFrameTableEntry(currVPN, nextFreeFrame);
         numOfFramesAllocated++;
 
 
@@ -115,7 +140,7 @@ void Pager::run() {
         pageTable->insertMapForVpn2Pfn(currVA, freedPfn);
 
         // add to pagereplacer
-        pageReplacer->addNFUFrame(currVPN, freedPfn);
+        pageReplacer->addFrameTableEntry(currVPN, freedPfn);
 
         // so that we know there are still no avialbe frames
         nextFreeFrame = availableFrames + 1; 
@@ -131,25 +156,30 @@ void Pager::run() {
 
     }
 
+    // logging options to at every address!
+    unsigned int offMask = ( 1 << pageTable->offset ) - 1;
+    unsigned int offsetBits = currVA & offMask;
+    unsigned int pa = pframe;
+
     if ( logOptions.addressTranslation ) {
-      unsigned int pa = pframe;
-      unsigned int offMask = ( 1 << pageTable->offset ) - 1;
-      unsigned int offsetBits = ( currVA & offMask );
       pa = (pframe << pageTable->offset) | offsetBits;
 
       log_va2pa(currVA, pa);
     }
 
     if ( logOptions.offset ) {
-      unsigned int offMask = ( 1 << pageTable->offset ) - 1;
-      unsigned int offsetBits = currVA & offMask;
-
       print_num_inHex(offsetBits);
     }
 
     if ( logOptions.vpns_pfn ) {
-      log_vpns_to_pfns(pageTable->levelCount, currVA, pframe );
+      uint32_t vpns[pageTable->levelCount];
+      for ( int i = 0; i < pageTable->levelCount; i ++ ) {
+        vpns[i] = pageTable->extractVPNFromVirtualAddress(currVA, 
+                                        pageTable->bitMaskAry[i],  
+                                        pageTable->shiftAry[i] );
+      }
 
+      log_vpns_pfn(pageTable->levelCount, vpns, pa);
     }
 
     if (logOptions.vpn2pfn_with_pagereplace)
@@ -162,21 +192,16 @@ void Pager::run() {
   pgtableEntries = pageTable->getTotalPgTableEntries( pageTable->rootLevel );
 }
 
-void Pager::log_vpns_to_pfns(int levels, unsigned int va, int pa) {
-  uint32_t vpns[levels];
-  for ( int i = 0; i < levels; i ++ ) {
-    vpns[i] = pageTable->extractVPNFromVirtualAddress( va, 
-                                    pageTable->bitMaskAry[i],  
-                                    pageTable->shiftAry[i] );
-  }
-
-  log_vpns_pfn(levels, vpns, pa);
-  
-
-}
-
+/*
+ * log()
+ * 
+ * @brief short hand to to call log_summary from log_helpers.h w/o its arguments 
+ *
+ * @return void
+ *
+ */
 void Pager::log() {
-  log_summary( pageTable->getPageSize(),
+  log_summary( pageTable->pageSize,
       numOfPageReplaces,
       pageTableHits,
       numOfAddresses,
